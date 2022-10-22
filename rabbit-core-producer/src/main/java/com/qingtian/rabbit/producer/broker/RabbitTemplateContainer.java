@@ -1,11 +1,16 @@
 package com.qingtian.rabbit.producer.broker;
 
+import com.alibaba.fastjson.JSON;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.Maps;
 import com.qingtian.rabbit.api.Message;
 import com.qingtian.rabbit.api.MessageType;
 import com.qingtian.rabbit.api.exception.MessageRunTimeException;
+import com.qingtian.rabbit.common.convert.GenericMessageConverter;
+import com.qingtian.rabbit.common.convert.RabbitMessageConverter;
+import com.qingtian.rabbit.common.serializer.SerializerFactory;
+import com.qingtian.rabbit.common.serializer.impl.JacksonSerializerFactory;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -24,11 +29,13 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Slf4j
-public class RabbitTemplateContainer implements RabbitTemplate.ConfirmCallback {
+public class RabbitTemplateContainer implements RabbitTemplate.ConfirmCallback, RabbitTemplate.ReturnCallback {
 
   private Map<String, RabbitTemplate> rabbitMap = Maps.newConcurrentMap();
 
   private Splitter splitter = Splitter.on("#");
+
+  private SerializerFactory serializerFactory = JacksonSerializerFactory.INSTANCE;
 
   @Autowired
   private ConnectionFactory connectionFactory;
@@ -49,11 +56,15 @@ public class RabbitTemplateContainer implements RabbitTemplate.ConfirmCallback {
     newRabbitTemplate.setRetryTemplate(new RetryTemplate());
 
     // 对于 message 的序列化方式
-//    newRabbitTemplate.setMessageConverter();
+    newRabbitTemplate.setMessageConverter(
+        new RabbitMessageConverter(new GenericMessageConverter(serializerFactory.create())));
     // 只要消息类型不是迅速消息 就需要设置 ConfirmCallback
     if (!MessageType.RAPID.equals(message.getMessageType())) {
+      newRabbitTemplate.setMandatory(true);
       newRabbitTemplate.setConfirmCallback(this);
+      newRabbitTemplate.setReturnCallback(this);
     }
+
 
     rabbitMap.putIfAbsent(topic, newRabbitTemplate);
     return rabbitMap.get(topic);
@@ -79,4 +90,18 @@ public class RabbitTemplateContainer implements RabbitTemplate.ConfirmCallback {
     }
   }
 
+  /**
+   * broker 发送到 queue 失败后回调
+   * @param message
+   * @param replyCode
+   * @param replyText
+   * @param exchange
+   * @param routingKey
+   */
+  @Override
+  public void returnedMessage(org.springframework.amqp.core.Message message, int replyCode, String replyText, String exchange, String routingKey) {
+    log.warn("send message to queue failed message : [{}],replyCode : [{}],"
+        + "replyText : [{}],exchange : [{}], routingKey : [{}]", JSON.toJSONString(message),replyCode,replyText,
+        exchange,routingKey);
+  }
 }
