@@ -14,7 +14,9 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <elastic-job.version>2.1.4</elastic-job.version>
+        <elastic-job.version>2.1.5</elastic-job.version>
+        <curator.version>2.11.0</curator.version>
+        <guava.version>20.0</guava.version>
     </properties>
 
     <dependencies>
@@ -33,6 +35,27 @@
             <groupId>com.dangdang</groupId>
             <artifactId>elastic-job-lite-spring</artifactId>
             <version>${elastic-job.version}</version>
+        </dependency>
+<!--        zookeeper curator-->
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-recipes</artifactId>
+            <version>${curator.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-framework</artifactId>
+            <version>${curator.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-client</artifactId>
+            <version>${curator.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

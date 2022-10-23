@@ -3,7 +3,14 @@ package com.qingtian.rabbit.task.autoconfiguration;
 import com.dangdang.ddframe.job.reg.zookeeper.ZookeeperConfiguration;
 import com.dangdang.ddframe.job.reg.zookeeper.ZookeeperRegistryCenter;
 import com.qingtian.rabbit.task.parser.ElasticJobConfigParser;
+import com.qingtian.rabbit.task.parser.JobConfigCustomizer;
+import com.qingtian.rabbit.task.parser.JobCoreConfigCustomizer;
+import com.qingtian.rabbit.task.parser.JobTypeNamesCustomizer;
+import com.qingtian.rabbit.task.parser.SpringJobSchedulerCustomizer;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -37,9 +44,15 @@ public class JobParserAutoConfiguration {
   }
 
   @Bean
+  @ConditionalOnMissingBean
   public ElasticJobConfigParser elasticJobConfigParser(JobZookeeperProperties jobZookeeperProperties,
-      ZookeeperRegistryCenter zookeeperRegistryCenter) {
-    return new ElasticJobConfigParser(jobZookeeperProperties, zookeeperRegistryCenter);
+      ZookeeperRegistryCenter zookeeperRegistryCenter,
+      ObjectProvider<List<JobTypeNamesCustomizer>> jobTypeNamesCustomizers,
+      ObjectProvider<List<JobCoreConfigCustomizer>> jobCoreConfigCustomizers,
+      ObjectProvider<List<JobConfigCustomizer>> jobConfigCustomizers,
+      ObjectProvider<List<SpringJobSchedulerCustomizer>> springJobSchedulerCustomizers) {
+    return new ElasticJobConfigParser(jobZookeeperProperties, zookeeperRegistryCenter, jobTypeNamesCustomizers,
+        jobCoreConfigCustomizers, jobConfigCustomizers, springJobSchedulerCustomizers);
   }
 
 }

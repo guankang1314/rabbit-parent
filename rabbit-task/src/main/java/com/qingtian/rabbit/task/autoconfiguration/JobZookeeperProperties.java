@@ -2,7 +2,6 @@ package com.qingtian.rabbit.task.autoconfiguration;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 /**
  * @author Guank
