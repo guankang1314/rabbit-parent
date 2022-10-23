@@ -11,6 +11,7 @@ import com.qingtian.rabbit.common.convert.GenericMessageConverter;
 import com.qingtian.rabbit.common.convert.RabbitMessageConverter;
 import com.qingtian.rabbit.common.serializer.SerializerFactory;
 import com.qingtian.rabbit.common.serializer.impl.JacksonSerializerFactory;
+import com.qingtian.rabbit.producer.service.MessageStoreService;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +40,9 @@ public class RabbitTemplateContainer implements RabbitTemplate.ConfirmCallback, 
 
   @Autowired
   private ConnectionFactory connectionFactory;
+
+  @Autowired
+  private MessageStoreService messageStoreService;
 
   public RabbitTemplate getTemplate(Message message) throws MessageRunTimeException {
     Preconditions.checkNotNull(message);
@@ -85,8 +89,11 @@ public class RabbitTemplateContainer implements RabbitTemplate.ConfirmCallback, 
 
     if (ack) {
       log.info("send message is OK, confirm messageId: [{}]， sendTime : [{}]", messageId, sendTime);
+      // 收到 broker 的确认消息，根据 messageId 更新本地消息表里的消息状态
+      messageStoreService.success(messageId);
     } else {
       log.error("send message is FAIL, confirm messageId: [{}]， sendTime : [{}]", messageId, sendTime);
+
     }
   }
 

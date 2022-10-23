@@ -12,9 +12,6 @@ import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;
 
 
-
-
-
 /**
  * <B>系统名称：</B><BR>
  * <B>模块名称：</B><BR>
