@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.NonNull;
 
 /**
  * @author Guank
@@ -24,6 +25,7 @@ public class Message implements Serializable {
     /**
      * 唯一消息id
      */
+    @NonNull
     private String messageId;
 
     /**

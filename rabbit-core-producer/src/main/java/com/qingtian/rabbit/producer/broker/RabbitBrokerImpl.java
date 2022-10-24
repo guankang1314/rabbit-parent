@@ -20,15 +20,17 @@ import org.springframework.stereotype.Component;
  * @description: RabbitBroker 实现类
  * @date 2022-10-16 22:06
  */
-@Component
 @Slf4j
 public class RabbitBrokerImpl implements RabbitBroker {
 
-  @Autowired
-  private RabbitTemplateContainer rabbitTemplateContainer;
+  private final RabbitTemplateContainer rabbitTemplateContainer;
 
-  @Autowired
-  private MessageStoreService messageStoreService;
+  private final MessageStoreService messageStoreService;
+
+  public RabbitBrokerImpl(RabbitTemplateContainer rabbitTemplateContainer, MessageStoreService messageStoreService) {
+    this.rabbitTemplateContainer = rabbitTemplateContainer;
+    this.messageStoreService = messageStoreService;
+  }
 
   @Override
   public void rapidSend(Message message) {
@@ -44,7 +46,7 @@ public class RabbitBrokerImpl implements RabbitBroker {
   private void sendKernel(Message message) {
     AsyncBaseQueue.submit(() -> {
       CorrelationData correlationData = new CorrelationData(
-          String.format("%s#%s", message.getMessageId(), System.currentTimeMillis()));
+          String.format("%s#%s#%s", message.getMessageId(), System.currentTimeMillis(), message.getMessageType()));
       RabbitTemplate rabbitTemplate = rabbitTemplateContainer.getTemplate(message);
       rabbitTemplate.convertAndSend(message.getTopic(), message.getRoutingKey(), message,
           correlationData);
@@ -63,19 +65,22 @@ public class RabbitBrokerImpl implements RabbitBroker {
   @Override
   public void reliantSend(Message message) {
     message.setMessageType(MessageType.RELIANT);
-    // 在向MQ发送消息之前，将消息记录在本地入库
-    Date now = new Date();
-    BrokerMessage brokerMessage = new BrokerMessage();
-    brokerMessage.setMessageId(message.getMessageId());
-    brokerMessage.setStatus(BrokerMessageStatus.SENDING.getCode());
-    // tryCount在一开始发送的时候不用设置默认为 0
-    // 设置下一次重试时间
-    brokerMessage.setNextRetry(DateUtils.addMinutes(now, BrokerMessageConst.TIMEOUT));
-    brokerMessage.setCreateTime(now);
-    brokerMessage.setUpdateTime(now);
-    brokerMessage.setMessage(message);
-    messageStoreService.insert(brokerMessage);
 
+    BrokerMessage msg = messageStoreService.selectByPrimaryKey(message.getMessageId());
+    if (null == msg) {
+      // 在向MQ发送消息之前，将消息记录在本地入库
+      Date now = new Date();
+      BrokerMessage brokerMessage = new BrokerMessage();
+      brokerMessage.setMessageId(message.getMessageId());
+      brokerMessage.setStatus(BrokerMessageStatus.SENDING.getCode());
+      // tryCount在一开始发送的时候不用设置默认为 0
+      // 设置下一次重试时间
+      brokerMessage.setNextRetry(DateUtils.addMinutes(now, BrokerMessageConst.TIMEOUT));
+      brokerMessage.setCreateTime(now);
+      brokerMessage.setUpdateTime(now);
+      brokerMessage.setMessage(message);
+      messageStoreService.insert(brokerMessage);
+    }
     // 发送消息
     sendKernel(message);
   }

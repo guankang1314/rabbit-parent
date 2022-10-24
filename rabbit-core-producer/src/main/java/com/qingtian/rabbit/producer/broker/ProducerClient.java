@@ -17,11 +17,14 @@ import java.util.List;
  * @description: 消息生产者实现
  * @date 2022-10-16 21:53
  */
-@Component
+
 public class ProducerClient implements MessageProducer {
 
-    @Autowired
-    private RabbitBroker rabbitBroker;
+    private final RabbitBroker rabbitBroker;
+
+    public ProducerClient(RabbitBroker rabbitBroker) {
+        this.rabbitBroker = rabbitBroker;
+    }
 
     @Override
     public void send(Message message) throws MessageRunTimeException {

@@ -28,7 +28,6 @@ import org.springframework.stereotype.Component;
  * @description: RabbitTemplate 池化封装 1. 每一个 topic 对应一个 RabbitTemplate 可以针对不同的 topic 定制不同的 RabbitTemplate 2. 提高发送效率
  * @date 2022-10-16 23:36
  */
-@Component
 @Slf4j
 public class RabbitTemplateContainer implements RabbitTemplate.ConfirmCallback, RabbitTemplate.ReturnCallback {
 
@@ -38,11 +37,14 @@ public class RabbitTemplateContainer implements RabbitTemplate.ConfirmCallback, 
 
   private SerializerFactory serializerFactory = JacksonSerializerFactory.INSTANCE;
 
-  @Autowired
-  private ConnectionFactory connectionFactory;
+  private final ConnectionFactory connectionFactory;
 
-  @Autowired
-  private MessageStoreService messageStoreService;
+  private final MessageStoreService messageStoreService;
+
+  public RabbitTemplateContainer(ConnectionFactory connectionFactory, MessageStoreService messageStoreService) {
+    this.connectionFactory = connectionFactory;
+    this.messageStoreService = messageStoreService;
+  }
 
   public RabbitTemplate getTemplate(Message message) throws MessageRunTimeException {
     Preconditions.checkNotNull(message);
@@ -86,11 +88,15 @@ public class RabbitTemplateContainer implements RabbitTemplate.ConfirmCallback, 
     List<String> strings = splitter.splitToList(correlationData.getId());
     String messageId = strings.get(0);
     Long sendTime = Long.parseLong(strings.get(1));
+    String messageType = strings.get(2);
 
     if (ack) {
       log.info("send message is OK, confirm messageId: [{}]， sendTime : [{}]", messageId, sendTime);
+      // 如果消息类型是reliant才更新数据库
       // 收到 broker 的确认消息，根据 messageId 更新本地消息表里的消息状态
-      messageStoreService.success(messageId);
+      if (MessageType.RELIANT.equals(messageType)) {
+        messageStoreService.success(messageId);
+      }
     } else {
       log.error("send message is FAIL, confirm messageId: [{}]， sendTime : [{}]", messageId, sendTime);
 
