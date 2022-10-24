@@ -1,3 +1,6 @@
 # Auto Configure
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.qingtian.rabbit.producer.autoconfiguration.RabbitAutoConfiguration
+com.qingtian.rabbit.producer.autoconfiguration.RabbitAutoConfiguration,\
+com.qingtian.rabbit.producer.autoconfiguration.database.BrokerMessageAutoConfiguration,\
+com.qingtian.rabbit.producer.autoconfiguration.database.RabbitProducerDataSourceAutoConfiguration,\
+com.qingtian.rabbit.producer.autoconfiguration.database.RabbitProducerMyBatisAutoConfiguration

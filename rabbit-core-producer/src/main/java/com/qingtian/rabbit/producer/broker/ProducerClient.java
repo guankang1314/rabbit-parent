@@ -6,9 +6,6 @@ import com.qingtian.rabbit.api.MessageProducer;
 import com.qingtian.rabbit.api.MessageType;
 import com.qingtian.rabbit.api.SendCallback;
 import com.qingtian.rabbit.api.exception.MessageRunTimeException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 
 /**
@@ -20,38 +17,47 @@ import java.util.List;
 
 public class ProducerClient implements MessageProducer {
 
-    private final RabbitBroker rabbitBroker;
+  private final RabbitBroker rabbitBroker;
 
-    public ProducerClient(RabbitBroker rabbitBroker) {
-        this.rabbitBroker = rabbitBroker;
+  public ProducerClient(RabbitBroker rabbitBroker) {
+    this.rabbitBroker = rabbitBroker;
+  }
+
+  @Override
+  public void send(Message message) throws MessageRunTimeException {
+    Preconditions.checkNotNull(message.getTopic());
+    String messageType = message.getMessageType();
+    switch (messageType) {
+      case MessageType.RAPID:
+        rabbitBroker.rapidSend(message);
+        break;
+      case MessageType.CONFIRM:
+        rabbitBroker.confirmSend(message);
+        break;
+      case MessageType.RELIANT:
+        rabbitBroker.reliantSend(message);
+        break;
+      default:
+        break;
     }
+  }
 
-    @Override
-    public void send(Message message) throws MessageRunTimeException {
-        Preconditions.checkNotNull(message.getTopic());
-        String messageType = message.getMessageType();
-        switch (messageType) {
-            case MessageType.RAPID:
-                rabbitBroker.rapidSend(message);
-                break;
-            case MessageType.CONFIRM:
-                rabbitBroker.confirmSend(message);
-                break;
-            case MessageType.RELIANT:
-                rabbitBroker.reliantSend(message);
-                break;
-            default:
-                break;
-        }
-    }
+  /**
+   * 批量发送消息
+   * @param messages
+   * @throws MessageRunTimeException
+   */
+  @Override
+  public void send(List<Message> messages) throws MessageRunTimeException {
+    messages.forEach(msg -> {
+      msg.setMessageType(MessageType.RAPID);
+      MessageHolder.add(msg);
+    });
+    rabbitBroker.sendMessages();
+  }
 
-    @Override
-    public void send(List<Message> messages) throws MessageRunTimeException {
+  @Override
+  public void send(Message message, SendCallback sendCallback) throws MessageRunTimeException {
 
-    }
-
-    @Override
-    public void send(Message message, SendCallback sendCallback) throws MessageRunTimeException {
-
-    }
+  }
 }

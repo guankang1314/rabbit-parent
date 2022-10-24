@@ -1,8 +1,7 @@
-package com.qingtian.rabbit.producer.config.database;
+package com.qingtian.rabbit.producer.autoconfiguration.database;
 
 import javax.sql.DataSource;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,16 +18,19 @@ import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
  *
  */
 @Configuration
-public class BrokerMessageConfiguration {
+public class BrokerMessageAutoConfiguration {
 
-    @Autowired
-    private DataSource rabbitProducerDataSource;
+    private  DataSource rabbitProducerDataSource;
     
     @Value("classpath:rabbit-producer-message-schema.sql")
     private Resource schemaScript;
-    
+
+    public BrokerMessageAutoConfiguration(DataSource rabbitProducerDataSource) {
+        this.rabbitProducerDataSource = rabbitProducerDataSource;
+    }
+
     @Bean
-    public DataSourceInitializer initDataSourceInitializer() {
+    public DataSourceInitializer initDataSourceInitializer(DataSource rabbitProducerDataSource) {
     	System.err.println("--------------rabbitProducerDataSource-----------:" + rabbitProducerDataSource);
         final DataSourceInitializer initializer = new DataSourceInitializer();
         initializer.setDataSource(rabbitProducerDataSource);

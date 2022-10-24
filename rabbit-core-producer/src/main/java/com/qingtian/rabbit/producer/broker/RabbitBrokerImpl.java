@@ -7,12 +7,11 @@ import com.qingtian.rabbit.producer.constant.BrokerMessageStatus;
 import com.qingtian.rabbit.producer.entity.BrokerMessage;
 import com.qingtian.rabbit.producer.service.MessageStoreService;
 import java.util.Date;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  * @author Guank
@@ -87,6 +86,17 @@ public class RabbitBrokerImpl implements RabbitBroker {
 
   @Override
   public void sendMessages() {
-
+    List<Message> messages = MessageHolder.clear();
+    messages.forEach(msg -> {
+      MessageHolderAsyncQueue.submit(() -> {
+        CorrelationData correlationData = new CorrelationData(
+            String.format("%s#%s#%s", msg.getMessageId(), System.currentTimeMillis(), msg.getMessageType()));
+        RabbitTemplate rabbitTemplate = rabbitTemplateContainer.getTemplate(msg);
+        rabbitTemplate.convertAndSend(msg.getTopic(), msg.getRoutingKey(), msg,
+            correlationData);
+        log.info("#RabbitBrokerImpl.sendMessages# send to rabbitmq, messageId : [{}]",
+            msg.getMessageId());
+      });
+    });
   }
 }

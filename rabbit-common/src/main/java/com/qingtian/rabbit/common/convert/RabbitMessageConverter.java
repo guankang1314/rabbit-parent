@@ -15,7 +15,7 @@ import org.springframework.amqp.support.converter.MessageConverter;
 public class RabbitMessageConverter implements MessageConverter {
   private GenericMessageConverter delegate;
 
-  private final String defaultExprie = String.valueOf(24 * 60 * 60 * 1000);
+//  private final String defaultExprie = String.valueOf(24 * 60 * 60 * 1000);
 
   public RabbitMessageConverter(GenericMessageConverter genericMessageConverter) {
     Preconditions.checkNotNull(genericMessageConverter);
@@ -25,7 +25,10 @@ public class RabbitMessageConverter implements MessageConverter {
 
   @Override
   public Message toMessage(Object o, MessageProperties messageProperties) throws MessageConversionException {
-    messageProperties.setExpiration(defaultExprie);
+//    messageProperties.setExpiration(defaultExprie);
+    com.qingtian.rabbit.api.Message message = (com.qingtian.rabbit.api.Message) o;
+    // 设置延迟消息的时间，需要 rabbitMQ 安装 rabbitmq-delayed-message-exchange 插件
+    messageProperties.setDelay(message.getDelayMills());
     return this.delegate.toMessage(o, messageProperties);
   }
 
